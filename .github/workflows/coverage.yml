@@ -15,43 +15,41 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install LLVM 15 (Consistent Toolchain)
+    - name: Install GCC and LCOV
       run: |
         sudo apt-get update
-        # Install a specific version (15) for all tools to prevent mismatch
-        sudo apt-get install -y clang-15 llvm-15 cmake
+        # Install GCC (standard C++ compiler) and LCOV (coverage tool)
+        sudo apt-get install -y gcc g++ lcov cmake
 
-    - name: Configure CMake
+    - name: Configure CMake (Switch to GCC)
       run: |
-        # Force CMake to use the version 15 compilers we just installed
+        # We explicitly set C and CXX compilers to GCC/G++
+        # We add '--coverage' which tells GCC to generate .gcno notes
         cmake -S . -B build \
           -DCMAKE_BUILD_TYPE=Debug \
-          -DCMAKE_C_COMPILER=clang-15 \
-          -DCMAKE_CXX_COMPILER=clang++-15 \
-          -DCMAKE_C_FLAGS="-O0 -g -fprofile-instr-generate -fcoverage-mapping" \
-          -DCMAKE_CXX_FLAGS="-O0 -g -fprofile-instr-generate -fcoverage-mapping"
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_CXX_FLAGS="--coverage" \
+          -DCMAKE_C_FLAGS="--coverage" \
+          -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 
     - name: Build
       run: cmake --build build
 
     - name: Run Tests
       run: |
-        # %m creates a unique profile for each executable signature to avoid corruption
-        export LLVM_PROFILE_FILE="build/code-%m.profraw"
+        # Run tests to generate the runtime .gcda data
         ctest --test-dir build --output-on-failure
 
     - name: Generate Coverage Report
       run: |
-        # 1. Merge Profiles using the SAME version (llvm-profdata-15)
-        llvm-profdata-15 merge -sparse build/*.profraw -o build/coverage.profdata
+        # 1. Initialize LCOV (Capture data)
+        # --directory build tells it where to look for .gcda files
+        lcov --capture --directory build --output-file coverage.info
 
-        # 2. Generate Report using the SAME version (llvm-cov-15)
-        # Note: We list the exact executables so llvm-cov finds the instruction map
-        llvm-cov-15 report \
-          build/test_bank \
-          -object build/test_lru \
-          -object build/test_threadpool \
-          -instr-profile=build/coverage.profdata \
-          -ignore-filename-regex="test_.*" \
-          -ignore-filename-regex="googletest/*"
+        # 2. Filter out System Files & Test Files
+        # We remove /usr/* (system headers) and tests/* (we only want source coverage)
+        lcov --remove coverage.info '/usr/*' '*/googletest/*' '*/tests/*' --output-file coverage.info
 
+        # 3. List the Coverage
+        lcov --list coverage.info
