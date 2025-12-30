@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   coverage:
@@ -14,40 +15,39 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install dependencies
+    - name: Install LLVM 15 (Consistent Toolchain)
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake clang llvm
+        # Install a specific version (15) for all tools to prevent mismatch
+        sudo apt-get install -y clang-15 llvm-15 cmake
 
-    - name: Configure (coverage enabled)
+    - name: Configure CMake
       run: |
+        # Force CMake to use the version 15 compilers we just installed
         cmake -S . -B build \
           -DCMAKE_BUILD_TYPE=Debug \
-          -DCMAKE_C_COMPILER=clang \
-          -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_C_COMPILER=clang-15 \
+          -DCMAKE_CXX_COMPILER=clang++-15 \
           -DCMAKE_C_FLAGS="-O0 -g -fprofile-instr-generate -fcoverage-mapping" \
-          -DCMAKE_CXX_FLAGS="-O0 -g -fprofile-instr-generate -fcoverage-mapping" \
-          -DCMAKE_EXE_LINKER_FLAGS="-fprofile-instr-generate"
+          -DCMAKE_CXX_FLAGS="-O0 -g -fprofile-instr-generate -fcoverage-mapping"
 
     - name: Build
-      run: |
-        cmake --build build
+      run: cmake --build build
 
-    - name: Run tests
+    - name: Run Tests
       run: |
-        # Set profile file pattern so tests write distinct raw data
+        # %m creates a unique profile for each executable signature to avoid corruption
         export LLVM_PROFILE_FILE="build/code-%m.profraw"
         ctest --test-dir build --output-on-failure
 
-    - name: Generate coverage report
+    - name: Generate Coverage Report
       run: |
-        # 1. Merge all raw profile data into one index
-        llvm-profdata merge -sparse build/*.profraw -o build/coverage.profdata
+        # 1. Merge Profiles using the SAME version (llvm-profdata-15)
+        llvm-profdata-15 merge -sparse build/*.profraw -o build/coverage.profdata
 
-        # 2. Generate Report
-        # Important: We must list EVERY test executable using -object
-        # We allow looking at 'src/' or 'include/' to find header code
-        llvm-cov report \
+        # 2. Generate Report using the SAME version (llvm-cov-15)
+        # Note: We list the exact executables so llvm-cov finds the instruction map
+        llvm-cov-15 report \
           build/test_bank \
           -object build/test_lru \
           -object build/test_threadpool \
