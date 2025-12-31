@@ -44,12 +44,12 @@ jobs:
     - name: Generate Coverage Report
       run: |
         # 1. Initialize LCOV (Capture data)
-        # --directory build tells it where to look for .gcda files
-        lcov --capture --directory build --output-file coverage.info
+        # We add '--ignore-errors mismatch' to bypass the GTest macro confusion
+        lcov --capture --directory build --output-file coverage.info --ignore-errors mismatch
 
         # 2. Filter out System Files & Test Files
         # We remove /usr/* (system headers) and tests/* (we only want source coverage)
-        lcov --remove coverage.info '/usr/*' '*/googletest/*' '*/tests/*' --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' '*/googletest/*' '*/tests/*' --output-file coverage.info --ignore-errors mismatch
 
         # 3. List the Coverage
-        lcov --list coverage.info
+        lcov --list coverage.info --ignore-errors mismatch
