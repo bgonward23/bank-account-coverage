@@ -44,10 +44,10 @@ gtest_discover_tests(test_threadpool)
 # ==========================================
 
 # --- A. Bank Account (3-Agent) ---
-# Assumes file is named: tests/test_bank_3agent_gpt4o.cpp
-add_executable(test_bank_3agent tests/test_bank_3agent_gpt4o.cpp)
-target_link_libraries(test_bank_3agent PRIVATE bank_account gtest_main)
-gtest_discover_tests(test_bank_3agent)
+# Assumes file is named: tests/test_bank_account_3agent_gpt4o.cpp
+add_executable(test_bank_account_3agent tests/test_bank_account_3agent_gpt4o.cpp)
+target_link_libraries(test_bank_account_3agent PRIVATE bank_account gtest_main)
+gtest_discover_tests(test_bank_account_3agent)
 
 # --- B. LRU Cache (3-Agent) ---
 # Assumes file is named: tests/test_lru_3agent_gpt4o.cpp
