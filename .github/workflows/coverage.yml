@@ -37,38 +37,48 @@ jobs:
     - name: Build
       run: cmake --build build
 
-    - name: Run Comparative Analysis (Copilot vs 3-Agent)
+    - name: Run Comparative Analysis (Direct Execution)
       run: |
         # ============================================
-        # ROUND 1: GITHUB COPILOT
+        # SETUP: Define Artifacts
+        # ============================================
+        # Ensure we start clean
+        find . -name "*.gcda" -delete
+
+        # ============================================
+        # ROUND 1: GITHUB COPILOT (Baseline)
         # ============================================
         echo "---------------------------------------------------"
         echo "🧪 RUNNING ROUND 1: GITHUB COPILOT TESTS"
         echo "---------------------------------------------------"
         
-        # 1. Run only Copilot tests (regex match for default names)
-        # Assuming defaults are: test_lru, test_threadpool
-        ctest -R "^test_lru$|^test_threadpool$" --output-on-failure
+        # 1. Run the specific executables directly (Bypass CTest)
+        # These names must match what is in your CMakeLists.txt add_executable()
+        ./build/test_lru || true  # '|| true' allows script to continue even if tests fail
+        ./build/test_threadpool || true
+        ./build/test_bank || true
 
-        # 2. Capture Score
-        echo "📊 COPILOT COVERAGE SCORE:" >> comparison_results.txt
+        # 2. Capture Score for Copilot
+        echo "📊 COPILOT COVERAGE SCORE:" > comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
         
-        # 3. RESET COUNTERS (Critical for comparison!)
-        # We delete data files so Qwen starts from 0%
+        # 3. CLEANUP (Critical!)
+        # Delete the .gcda files so Round 2 starts from 0%
         find . -name "*.gcda" -delete
 
         # ============================================
-        # ROUND 2: 3-AGENT FLOW (Qwen/GPT-4o)
+        # ROUND 2: 3-AGENT FLOW (Challenger)
         # ============================================
         echo "---------------------------------------------------"
         echo "🧪 RUNNING ROUND 2: 3-AGENT TESTS"
         echo "---------------------------------------------------"
 
-        # 1. Run only 3-Agent tests (regex match for '3agent')
-        ctest -R "3agent" --output-on-failure
+        # 1. Run the specific 3-Agent executables directly
+        ./build/test_lru_3agent || true
+        ./build/test_threadpool_3agent || true
+        ./build/test_bank_3agent || true
 
-        # 2. Capture Score
+        # 2. Capture Score for 3-Agent
         echo -e "\n📊 3-AGENT COVERAGE SCORE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
 
