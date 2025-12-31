@@ -37,23 +37,45 @@ jobs:
     - name: Build
       run: cmake --build build
 
-    - name: Run Tests
+    - name: Run Comparative Analysis (Copilot vs 3-Agent)
       run: |
-        ctest --test-dir build --output-on-failure
+        # ============================================
+        # ROUND 1: GITHUB COPILOT
+        # ============================================
+        echo "---------------------------------------------------"
+        echo "🧪 RUNNING ROUND 1: GITHUB COPILOT TESTS"
+        echo "---------------------------------------------------"
+        
+        # 1. Run only Copilot tests (regex match for default names)
+        # Assuming defaults are: test_lru, test_threadpool
+        ctest -R "^test_lru$|^test_threadpool$" --output-on-failure
 
-    - name: Generate Coverage Report
-      run: |
-        # 1. Print Text Summary (Keep this for the logs)
-        gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary
+        # 2. Capture Score
+        echo "📊 COPILOT COVERAGE SCORE:" >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
+        
+        # 3. RESET COUNTERS (Critical for comparison!)
+        # We delete data files so Qwen starts from 0%
+        find . -name "*.gcda" -delete
 
-        # 2. Generate Detailed HTML Report (For your Thesis)
-        gcovr -r . \
-              -f src/ \
-              --gcov-executable gcov-12 \
-              --html-details build/coverage_details.html
+        # ============================================
+        # ROUND 2: 3-AGENT FLOW (Qwen/GPT-4o)
+        # ============================================
+        echo "---------------------------------------------------"
+        echo "🧪 RUNNING ROUND 2: 3-AGENT TESTS"
+        echo "---------------------------------------------------"
 
-    - name: Upload Coverage Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-html-report
-        path: build/coverage_details.*
+        # 1. Run only 3-Agent tests (regex match for '3agent')
+        ctest -R "3agent" --output-on-failure
+
+        # 2. Capture Score
+        echo -e "\n📊 3-AGENT COVERAGE SCORE:" >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
+
+        # ============================================
+        # FINAL REPORT
+        # ============================================
+        echo "#############################################"
+        echo "      🏆 FINAL THESIS COMPARISON REPORT      "
+        echo "#############################################"
+        cat comparison_results.txt
