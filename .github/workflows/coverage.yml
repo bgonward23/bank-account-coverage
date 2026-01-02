@@ -23,10 +23,10 @@ jobs:
 
     - name: Configure CMake
       run: |
-        # Clean build folder to ensure no old flags remain
+        # Force Clean
         rm -rf build
         
-        # Configure using GCC 12
+        # Configure for GPT-4o
         cmake -S . -B build \
           -DCMAKE_BUILD_TYPE=Debug \
           -DCMAKE_CXX_COMPILER=g++-12 \
@@ -35,17 +35,17 @@ jobs:
     - name: Build
       run: cmake --build build
 
-    - name: Run Copilot Tests
+    - name: Run GPT-4o Tests
       run: |
-        echo "🧪 RUNNING COPILOT TESTS..."
-        ./build/test_lru || true
-        ./build/test_threadpool || true
-        ./build/test_bank || true
+        echo "🧪 RUNNING GPT-4o TESTS..."
+        ./build/test_lru_3agent || true
+        ./build/test_threadpool_3agent || true
+        ./build/test_bank_3agent || true
 
     - name: Generate Coverage Report
       run: |
         echo "============================================="
-        echo "📊 COPILOT COVERAGE REPORT"
+        echo "📊 GPT-4o COVERAGE REPORT"
         echo "============================================="
         
         # Line Coverage
