@@ -23,7 +23,6 @@ jobs:
 
     - name: Configure CMake
       run: |
-        # Use GCC-12 and enable coverage flags
         cmake -S . -B build \
           -DCMAKE_BUILD_TYPE=Debug \
           -DCMAKE_C_COMPILER=gcc-12 \
@@ -35,68 +34,72 @@ jobs:
     - name: Build
       run: cmake --build build
 
-    - name: Run Comparative Analysis (Copilot vs GPT-4o vs Qwen)
+    - name: Run Comparative Analysis
       run: |
         # ============================================
         # SETUP
         # ============================================
-        # Clear any previous run data
         find . -name "*.gcda" -delete
-        
-        # Initialize the result file
         echo "📊 THESIS COMPARISON REPORT" > comparison_results.txt
         echo "=============================================" >> comparison_results.txt
 
         # ============================================
-        # ROUND 1: GITHUB COPILOT (Baseline)
+        # ROUND 1: GITHUB COPILOT
         # ============================================
         echo "🧪 RUNNING ROUND 1: COPILOT"
-        
-        # Run Copilot binaries (Ignore errors with || true so the report continues)
         ./build/test_lru || true
         ./build/test_threadpool || true
         ./build/test_bank || true
 
         echo "--- COPILOT SCORES ---" >> comparison_results.txt
-        # Capture coverage, append to report
+        
+        # 1. Standard Report (Lines)
+        echo "📋 LINE COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
         
-        # CLEANUP: Delete Copilot data so it doesn't count towards the next agent
+        # 2. Branch Report (Detailed per file)
+        echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
+
+        # Cleanup
         find . -name "*.gcda" -delete
 
         # ============================================
-        # ROUND 2: GPT-4o (3-Agent)
+        # ROUND 2: GPT-4o
         # ============================================
-        echo "🧪 RUNNING ROUND 2: GPT-4o (3-AGENT)"
-        
+        echo "🧪 RUNNING ROUND 2: GPT-4o"
         ./build/test_lru_3agent || true
         ./build/test_threadpool_3agent || true
         ./build/test_bank_3agent || true
 
         echo -e "\n--- GPT-4o SCORES ---" >> comparison_results.txt
+        
+        echo "📋 LINE COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
+        
+        echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
 
-        # CLEANUP
+        # Cleanup
         find . -name "*.gcda" -delete
 
         # ============================================
-        # ROUND 3: QWEN (3-Agent)
+        # ROUND 3: QWEN
         # ============================================
-        echo "🧪 RUNNING ROUND 3: QWEN (3-AGENT)"
-        
-        # This is the part you were likely missing!
+        echo "🧪 RUNNING ROUND 3: QWEN"
         ./build/test_lru_qwen || true
         ./build/test_threadpool_qwen || true
         ./build/test_bank_qwen || true
 
         echo -e "\n--- QWEN SCORES ---" >> comparison_results.txt
+        
+        echo "📋 LINE COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
+        
+        echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
 
         # ============================================
         # FINAL REPORT
         # ============================================
-        echo "#############################################"
-        echo "      🏆 FINAL THESIS COMPARISON REPORT      "
-        echo "#############################################"
-        # Print the text file to the console logs
         cat comparison_results.txt
