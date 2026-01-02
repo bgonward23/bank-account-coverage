@@ -123,7 +123,8 @@ TEST_F(SimpleThreadPoolTest, UT_SimpleThreadPool_Concurrency_MultipleProducers) 
     for (int i = 0; i < producerCount; ++i) {
         producers.emplace_back([&pool, i, tasksPerProducer]() {
             for (int j = 0; j < tasksPerProducer; ++j) {
-                pool.enqueue([i, j]() { return i * tasksPerProducer + j; });
+                pool.enqueue([i, j, tasksPerProducer]() { return i * tasksPerProducer + j; });
+                
             }
         });
     }
