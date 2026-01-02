@@ -21,84 +21,73 @@ jobs:
         sudo apt-get install -y gcc-12 g++-12 cmake
         pip install gcovr
 
-    - name: Configure CMake (FORCE RESET)
+    # ========================================================
+    # ROUND 1: COPILOT ONLY
+    # ========================================================
+    - name: 🧪 Run Round 1 (Copilot)
       run: |
-        # ---------------------------------------------------------
-        # CRITICAL FIX: Delete the old build folder to clear the cache.
-        # This ensures the '336 lines' flags are gone for good.
-        # ---------------------------------------------------------
-        rm -rf build
-
-        # Now configure with standard flags (Resulting in ~87 lines for ThreadPool)
-        cmake -S . -B build \
-          -DCMAKE_BUILD_TYPE=Debug \
-          -DCMAKE_C_COMPILER=gcc-12 \
-          -DCMAKE_CXX_COMPILER=g++-12 \
-          -DCMAKE_CXX_FLAGS="--coverage -O0" \
-          -DCMAKE_C_FLAGS="--coverage -O0" \
-          -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-
-    - name: Build
-      run: cmake --build build
-
-    - name: Run Comparative Analysis
-      run: |
-        # ============================================
-        # SETUP
-        # ============================================
-        find . -name "*.gcda" -delete
-        echo "📊 THESIS COMPARISON REPORT (Instantiated Code)" > comparison_results.txt
+        echo "=============================================" > comparison_results.txt
+        echo "📊 THESIS COMPARISON REPORT (Isolated Builds)" >> comparison_results.txt
         echo "=============================================" >> comparison_results.txt
-
-        # ============================================
-        # ROUND 1: GITHUB COPILOT
-        # ============================================
-        echo "🧪 RUNNING ROUND 1: COPILOT"
+        
+        rm -rf build
+        cmake -S . -B build -DBUILD_COPILOT=ON -DCMAKE_CXX_COMPILER=g++-12
+        cmake --build build
+        
         ./build/test_lru || true
         ./build/test_threadpool || true
         ./build/test_bank || true
-
+        
         echo "--- COPILOT SCORES ---" >> comparison_results.txt
         echo "📋 LINE COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
+        gcovr -r . -f src/ --print-summary >> comparison_results.txt
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
+        gcovr -r . -f src/ --branches >> comparison_results.txt
 
-        # Cleanup
-        find . -name "*.gcda" -delete
-
-        # ============================================
-        # ROUND 2: GPT-4o
-        # ============================================
-        echo "🧪 RUNNING ROUND 2: GPT-4o"
+    # ========================================================
+    # ROUND 2: GPT-4o ONLY
+    # ========================================================
+    - name: 🧪 Run Round 2 (GPT-4o)
+      run: |
+        # NUKE THE BUILD FOLDER (This is the secret to getting 87 lines)
+        rm -rf build 
+        
+        cmake -S . -B build -DBUILD_GPT4O=ON -DCMAKE_CXX_COMPILER=g++-12
+        cmake --build build
+        
         ./build/test_lru_3agent || true
         ./build/test_threadpool_3agent || true
         ./build/test_bank_3agent || true
-
+        
         echo -e "\n--- GPT-4o SCORES ---" >> comparison_results.txt
         echo "📋 LINE COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
+        gcovr -r . -f src/ --print-summary >> comparison_results.txt
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
+        gcovr -r . -f src/ --branches >> comparison_results.txt
 
-        # Cleanup
-        find . -name "*.gcda" -delete
-
-        # ============================================
-        # ROUND 3: QWEN
-        # ============================================
-        echo "🧪 RUNNING ROUND 3: QWEN"
+    # ========================================================
+    # ROUND 3: QWEN ONLY
+    # ========================================================
+    - name: 🧪 Run Round 3 (Qwen)
+      run: |
+        # NUKE THE BUILD FOLDER AGAIN
+        rm -rf build
+        
+        cmake -S . -B build -DBUILD_QWEN=ON -DCMAKE_CXX_COMPILER=g++-12
+        cmake --build build
+        
         ./build/test_lru_qwen || true
         ./build/test_threadpool_qwen || true
         ./build/test_bank_qwen || true
-
+        
         echo -e "\n--- QWEN SCORES ---" >> comparison_results.txt
         echo "📋 LINE COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
+        gcovr -r . -f src/ --print-summary >> comparison_results.txt
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
-
-        # ============================================
-        # FINAL REPORT
-        # ============================================
+        gcovr -r . -f src/ --branches >> comparison_results.txt
+        
+        # PRINT FINAL REPORT
+        echo "#############################################"
+        echo "      🏆 FINAL THESIS COMPARISON REPORT      "
+        echo "#############################################"
         cat comparison_results.txt
