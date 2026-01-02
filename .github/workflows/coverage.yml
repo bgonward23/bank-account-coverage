@@ -30,63 +30,74 @@ jobs:
         echo "📊 THESIS COMPARISON REPORT (Isolated Builds)" >> comparison_results.txt
         echo "=============================================" >> comparison_results.txt
         
+        # 1. CLEAN BUILD
         rm -rf build
+        
+        # 2. CONFIGURE (Copilot Switch ON)
         cmake -S . -B build -DBUILD_COPILOT=ON -DCMAKE_CXX_COMPILER=g++-12
         cmake --build build
         
+        # 3. RUN TESTS
         ./build/test_lru || true
         ./build/test_threadpool || true
         ./build/test_bank || true
         
+        # 4. CAPTURE COVERAGE (Using gcov-12 explicit)
         echo "--- COPILOT SCORES ---" >> comparison_results.txt
         echo "📋 LINE COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --print-summary >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --branches >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
 
     # ========================================================
     # ROUND 2: GPT-4o ONLY
     # ========================================================
     - name: 🧪 Run Round 2 (GPT-4o)
       run: |
-        # NUKE THE BUILD FOLDER (This is the secret to getting 87 lines)
+        # 1. CLEAN BUILD
         rm -rf build 
         
+        # 2. CONFIGURE (GPT4o Switch ON)
         cmake -S . -B build -DBUILD_GPT4O=ON -DCMAKE_CXX_COMPILER=g++-12
         cmake --build build
         
+        # 3. RUN TESTS
         ./build/test_lru_3agent || true
         ./build/test_threadpool_3agent || true
         ./build/test_bank_3agent || true
         
+        # 4. CAPTURE COVERAGE
         echo -e "\n--- GPT-4o SCORES ---" >> comparison_results.txt
         echo "📋 LINE COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --print-summary >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --branches >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
 
     # ========================================================
     # ROUND 3: QWEN ONLY
     # ========================================================
     - name: 🧪 Run Round 3 (Qwen)
       run: |
-        # NUKE THE BUILD FOLDER AGAIN
+        # 1. CLEAN BUILD
         rm -rf build
         
+        # 2. CONFIGURE (Qwen Switch ON)
         cmake -S . -B build -DBUILD_QWEN=ON -DCMAKE_CXX_COMPILER=g++-12
         cmake --build build
         
+        # 3. RUN TESTS
         ./build/test_lru_qwen || true
         ./build/test_threadpool_qwen || true
         ./build/test_bank_qwen || true
         
+        # 4. CAPTURE COVERAGE
         echo -e "\n--- QWEN SCORES ---" >> comparison_results.txt
         echo "📋 LINE COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --print-summary >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
-        gcovr -r . -f src/ --branches >> comparison_results.txt
+        gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
         
-        # PRINT FINAL REPORT
+        # 5. PRINT FINAL REPORT
         echo "#############################################"
         echo "      🏆 FINAL THESIS COMPARISON REPORT      "
         echo "#############################################"
