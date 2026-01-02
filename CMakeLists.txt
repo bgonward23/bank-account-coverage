@@ -8,8 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ==========================================
 # 1. STANDARD COVERAGE FLAGS
 # ==========================================
-# We use -O0 (Debug) which is the standard way to test.
-# We do NOT use -fno-inline, so the line count will be accurate (~87 lines).
+# Using -O0 (Standard Debug) to match your previous run.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -O0 -g")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -O0 -g")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
@@ -35,22 +34,22 @@ include_directories(src)
 add_library(bank_account src/bank_account.cpp)
 
 # ==========================================
-# 4. COPILOT TARGETS (The Only Ones Active)
+# 4. GPT-4o TARGETS (The Only Ones Active)
 # ==========================================
 
-# Bank Account
-add_executable(test_bank tests/test_bank_account.cpp)
-target_link_libraries(test_bank PRIVATE bank_account gtest_main)
-gtest_discover_tests(test_bank)
+# Bank Account (GPT-4o)
+add_executable(test_bank_3agent tests/test_bank_account_3agent_gpt4o.cpp)
+target_link_libraries(test_bank_3agent PRIVATE bank_account gtest_main)
+gtest_discover_tests(test_bank_3agent)
 
-# LRU Cache
-add_executable(test_lru tests/test_lru.cpp)
-target_include_directories(test_lru PRIVATE src)
-target_link_libraries(test_lru PRIVATE gtest_main gtest)
-gtest_discover_tests(test_lru)
+# LRU Cache (GPT-4o)
+add_executable(test_lru_3agent tests/test_lru_3agent_gpt4o.cpp)
+target_include_directories(test_lru_3agent PRIVATE src)
+target_link_libraries(test_lru_3agent PRIVATE gtest_main gtest)
+gtest_discover_tests(test_lru_3agent)
 
-# Thread Pool (The critical one)
-add_executable(test_threadpool tests/test_threadpool.cpp)
-target_include_directories(test_threadpool PRIVATE src)
-target_link_libraries(test_threadpool PRIVATE gtest_main gtest pthread)
-gtest_discover_tests(test_threadpool)
+# Thread Pool (GPT-4o)
+add_executable(test_threadpool_3agent tests/test_threadpool_3agent_gpt4o.cpp)
+target_include_directories(test_threadpool_3agent PRIVATE src)
+target_link_libraries(test_threadpool_3agent PRIVATE gtest_main gtest pthread)
+gtest_discover_tests(test_threadpool_3agent)
