@@ -21,10 +21,12 @@ jobs:
         sudo apt-get install -y gcc-12 g++-12 cmake
         pip install gcovr
 
-    - name: Configure CMake (Optimized for Instantiated Coverage)
+    - name: Configure CMake
       run: |
-        # REMOVED: -fno-inline -fno-inline-small-functions -fno-default-inline
-        # This will revert the total lines from 336 back to ~87 for ThreadPool
+        # FORCE CLEAN: Delete previous build to reset flags
+        rm -rf build  
+
+        # Now run CMake with standard flags (No strict inlining)
         cmake -S . -B build \
           -DCMAKE_BUILD_TYPE=Debug \
           -DCMAKE_C_COMPILER=gcc-12 \
