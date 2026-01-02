@@ -52,16 +52,12 @@ jobs:
         ./build/test_bank || true
 
         echo "--- COPILOT SCORES ---" >> comparison_results.txt
-        
-        # 1. Standard Report (Lines)
         echo "📋 LINE COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
-        
-        # 2. Branch Report (Detailed per file)
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
 
-        # Cleanup
+        # Cleanup for next round
         find . -name "*.gcda" -delete
 
         # ============================================
@@ -73,14 +69,12 @@ jobs:
         ./build/test_bank_3agent || true
 
         echo -e "\n--- GPT-4o SCORES ---" >> comparison_results.txt
-        
         echo "📋 LINE COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
-        
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
 
-        # Cleanup
+        # Cleanup for next round
         find . -name "*.gcda" -delete
 
         # ============================================
@@ -92,25 +86,26 @@ jobs:
         ./build/test_bank_qwen || true
 
         echo -e "\n--- QWEN SCORES ---" >> comparison_results.txt
-        
         echo "📋 LINE COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --print-summary >> comparison_results.txt
-        
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
 
         # ============================================
+        # FINAL CONSOLE REPORT
+        # ============================================
+        echo "#############################################"
+        echo "      🏆 FINAL THESIS COMPARISON REPORT      "
+        echo "#############################################"
+        cat comparison_results.txt
 
-        - name: Generate HTML Detailed Report
-          run: |
+    - name: Generate HTML Detailed Report (Qwen Data)
+      run: |
         mkdir coverage_html
-        gcovr -r . -f src/ --html --html-details -o coverage_html/index.html
+        gcovr -r . -f src/ --gcov-executable gcov-12 --html --html-details -o coverage_html/index.html
 
-    - name: Upload Report
+    - name: Upload HTML Report
       uses: actions/upload-artifact@v4
       with:
         name: coverage-report
         path: coverage_html/
-        # FINAL REPORT
-        # ============================================
-        cat comparison_results.txt
