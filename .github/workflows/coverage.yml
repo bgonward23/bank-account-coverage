@@ -21,14 +21,16 @@ jobs:
         sudo apt-get install -y gcc-12 g++-12 cmake
         pip install gcovr
 
-    - name: Configure CMake
+    - name: Configure CMake (Optimized for Instantiated Coverage)
       run: |
+        # REMOVED: -fno-inline -fno-inline-small-functions -fno-default-inline
+        # This will revert the total lines from 336 back to ~87 for ThreadPool
         cmake -S . -B build \
           -DCMAKE_BUILD_TYPE=Debug \
           -DCMAKE_C_COMPILER=gcc-12 \
           -DCMAKE_CXX_COMPILER=g++-12 \
-          -DCMAKE_CXX_FLAGS="--coverage -fno-inline -fno-inline-small-functions -fno-default-inline -O0" \
-          -DCMAKE_C_FLAGS="--coverage -fno-inline -fno-inline-small-functions -fno-default-inline -O0" \
+          -DCMAKE_CXX_FLAGS="--coverage -O0" \
+          -DCMAKE_C_FLAGS="--coverage -O0" \
           -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 
     - name: Build
@@ -40,7 +42,7 @@ jobs:
         # SETUP
         # ============================================
         find . -name "*.gcda" -delete
-        echo "📊 THESIS COMPARISON REPORT" > comparison_results.txt
+        echo "📊 THESIS COMPARISON REPORT (Instantiated Code)" > comparison_results.txt
         echo "=============================================" >> comparison_results.txt
 
         # ============================================
@@ -57,7 +59,7 @@ jobs:
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
 
-        # Cleanup for next round
+        # Cleanup
         find . -name "*.gcda" -delete
 
         # ============================================
@@ -74,7 +76,7 @@ jobs:
         echo -e "\n🌿 BRANCH COVERAGE:" >> comparison_results.txt
         gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
 
-        # Cleanup for next round
+        # Cleanup
         find . -name "*.gcda" -delete
 
         # ============================================
@@ -92,20 +94,6 @@ jobs:
         gcovr -r . -f src/ --gcov-executable gcov-12 --branches >> comparison_results.txt
 
         # ============================================
-        # FINAL CONSOLE REPORT
+        # FINAL REPORT
         # ============================================
-        echo "#############################################"
-        echo "      🏆 FINAL THESIS COMPARISON REPORT      "
-        echo "#############################################"
         cat comparison_results.txt
-
-    - name: Generate HTML Detailed Report (Qwen Data)
-      run: |
-        mkdir coverage_html
-        gcovr -r . -f src/ --gcov-executable gcov-12 --html --html-details -o coverage_html/index.html
-
-    - name: Upload HTML Report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: coverage_html/
