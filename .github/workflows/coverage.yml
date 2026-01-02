@@ -26,7 +26,7 @@ jobs:
         # Force Clean
         rm -rf build
         
-        # Configure for GPT-4o
+        # Configure for Qwen
         cmake -S . -B build \
           -DCMAKE_BUILD_TYPE=Debug \
           -DCMAKE_CXX_COMPILER=g++-12 \
@@ -35,17 +35,17 @@ jobs:
     - name: Build
       run: cmake --build build
 
-    - name: Run GPT-4o Tests
+    - name: Run Qwen Tests
       run: |
-        echo "🧪 RUNNING GPT-4o TESTS..."
-        ./build/test_lru_3agent || true
-        ./build/test_threadpool_3agent || true
-        ./build/test_bank_3agent || true
+        echo "🧪 RUNNING QWEN TESTS..."
+        ./build/test_lru_qwen || true
+        ./build/test_threadpool_qwen || true
+        ./build/test_bank_qwen || true
 
     - name: Generate Coverage Report
       run: |
         echo "============================================="
-        echo "📊 GPT-4o COVERAGE REPORT"
+        echo "📊 QWEN COVERAGE REPORT"
         echo "============================================="
         
         # Line Coverage
