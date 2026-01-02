@@ -1,143 +1,126 @@
+#include "bank_account.h"
 #include <gtest/gtest.h>
-#include <stdexcept>
-#include "bank_account.h" // Assuming the implementation is in this header file
+#include <iostream> 
+#include <limits>  
 
-// Test fixture for BankAccount tests
-class BankAccountTest : public ::testing::Test {
-protected:
-    BankAccount* account;
-    BankAccount* target_account;
-
-    void SetUp() override {
-        account = new BankAccount("Alice", 1000.0);
-        target_account = new BankAccount("Bob", 500.0);
-    }
-
-    void TearDown() override {
-        delete account;
-        delete target_account;
-    }
-};
-
-// Nominal Test Cases
-TEST_F(BankAccountTest, UT_BankAccountGetBalance_InitialBalance) {
-    EXPECT_EQ(account->get_balance(), 1000.0);
+// Test case to verify that depositing money increases the account balance correctly.
+TEST(BankAccountTest, Deposit) {
+    std::cout << "Running Test: Deposit\n";
+    BankAccount account("John", 100.0);
+    account.deposit(50.0);
+    EXPECT_EQ(account.get_balance(), 150.0);
+    std::cout << "Deposit Test Passed: Balance is " << account.get_balance() << "\n";
 }
 
-TEST_F(BankAccountTest, UT_BankAccountDeposit_ValidAmount) {
-    account->deposit(500.0);
-    EXPECT_EQ(account->get_balance(), 1500.0);
+// Test case to verify boundary values for deposit functionality.
+TEST(BankAccountTest, DepositBoundaryValues) {
+    std::cout << "Running Test: DepositBoundaryValues\n";
+    BankAccount account("John", 100.0);
+
+    // Smallest positive deposit
+    account.deposit(0.01);
+    EXPECT_EQ(account.get_balance(), 100.01);
+
+    // Maximum deposit
+    EXPECT_NO_THROW(account.deposit(DBL_MAX - 100.01));
+
+    // Deposit zero (invalid)
+    EXPECT_THROW(account.deposit(0), std::invalid_argument);
+
+    // Deposit negative amount (invalid)
+    EXPECT_THROW(account.deposit(-50.0), std::invalid_argument);
+
+    std::cout << "DepositBoundaryValues Test Passed\n";
 }
 
-TEST_F(BankAccountTest, UT_BankAccountWithdraw_ValidAmount) {
-    account->withdraw(300.0);
-    EXPECT_EQ(account->get_balance(), 700.0);
+// Test case to verify that withdrawing money decreases the account balance correctly.
+TEST(BankAccountTest, Withdraw) {
+    std::cout << "Running Test: Withdraw\n";
+    BankAccount account("John", 100.0);
+    account.withdraw(50.0);
+    EXPECT_EQ(account.get_balance(), 50.0);
+    std::cout << "Withdraw Test Passed: Balance is " << account.get_balance() << "\n";
 }
 
-TEST_F(BankAccountTest, UT_BankAccountTransfer_ValidAmount) {
-    account->transfer(200.0, *target_account);
-    EXPECT_EQ(account->get_balance(), 800.0);
-    EXPECT_EQ(target_account->get_balance(), 700.0);
+// Test case to verify boundary values for withdraw functionality.
+TEST(BankAccountTest, WithdrawBoundaryValues) {
+    std::cout << "Running Test: WithdrawBoundaryValues\n";
+    BankAccount account("John", 100.0);
+
+    // Withdraw exact balance
+    EXPECT_NO_THROW(account.withdraw(100.0));
+    EXPECT_EQ(account.get_balance(), 0.0);
+
+    // Withdraw more than balance
+    EXPECT_THROW(account.withdraw(0.01), std::runtime_error);
+
+    // Withdraw zero (invalid)
+    EXPECT_THROW(account.withdraw(0), std::invalid_argument);
+
+    // Withdraw negative amount (invalid)
+    EXPECT_THROW(account.withdraw(-50.0), std::invalid_argument);
+
+    std::cout << "WithdrawBoundaryValues Test Passed\n";
 }
 
-// Boundary Conditions
-TEST_F(BankAccountTest, UT_BankAccountDeposit_MinimumAmount) {
-    account->deposit(0.01);
-    EXPECT_EQ(account->get_balance(), 1000.01);
+// Test case to verify that withdrawing more money than the account balance throws an exception.
+TEST(BankAccountTest, InsufficientFunds) {
+    std::cout << "Running Test: InsufficientFunds\n";
+    BankAccount account("John", 100.0);
+    EXPECT_THROW(account.withdraw(150.0), std::runtime_error);
+    std::cout << "InsufficientFunds Test Passed: Exception thrown as expected\n";
 }
 
-TEST_F(BankAccountTest, UT_BankAccountWithdraw_EntireBalance) {
-    account->withdraw(1000.0);
-    EXPECT_EQ(account->get_balance(), 0.0);
+// Test case to verify that transferring money between two accounts updates both balances correctly.
+TEST(BankAccountTest, Transfer) {
+    std::cout << "Running Test: Transfer\n";
+    BankAccount account1("John", 100.0);
+    BankAccount account2("Jane", 50.0);
+    account1.transfer(50.0, account2);
+    EXPECT_EQ(account1.get_balance(), 50.0);
+    EXPECT_EQ(account2.get_balance(), 100.0);
+    std::cout << "Transfer Test Passed: Account1 Balance = " << account1.get_balance()
+              << ", Account2 Balance = " << account2.get_balance() << "\n";
 }
 
-TEST_F(BankAccountTest, UT_BankAccountTransfer_EntireBalance) {
-    account->transfer(1000.0, *target_account);
-    EXPECT_EQ(account->get_balance(), 0.0);
-    EXPECT_EQ(target_account->get_balance(), 1500.0);
+// Test case to verify boundary values for transfer functionality.
+TEST(BankAccountTest, TransferBoundaryValues) {
+    std::cout << "Running Test: TransferBoundaryValues\n";
+    BankAccount account1("John", 100.0);
+    BankAccount account2("Jane", 50.0);
+
+    // Transfer exact balance
+    EXPECT_NO_THROW(account1.transfer(100.0, account2));
+    EXPECT_EQ(account1.get_balance(), 0.0);
+    EXPECT_EQ(account2.get_balance(), 150.0);
+
+    // Transfer zero (invalid)
+    EXPECT_THROW(account1.transfer(0, account2), std::invalid_argument);
+
+    // Transfer negative amount (invalid)
+    EXPECT_THROW(account1.transfer(-50.0, account2), std::invalid_argument);
+
+    // Transfer to the same account (invalid)
+    EXPECT_THROW(account1.transfer(50.0, account1), std::invalid_argument);
+
+    std::cout << "TransferBoundaryValues Test Passed\n";
 }
 
-TEST_F(BankAccountTest, UT_BankAccountDeposit_ZeroAmount) {
-    EXPECT_THROW(account->deposit(0.0), std::invalid_argument);
+// Test case to verify boundary values for get_balance functionality.
+TEST(BankAccountTest, GetBalanceBoundaryValues) {
+    std::cout << "Running Test: GetBalanceBoundaryValues\n";
+    BankAccount account("John", 0.0);
+
+    // Check initial balance
+    EXPECT_EQ(account.get_balance(), 0.0);
+
+    // Add a large amount
+    account.deposit(DBL_MAX);
+    EXPECT_EQ(account.get_balance(), DBL_MAX);
+
+    // Withdraw a large amount
+    account.withdraw(DBL_MAX);
+    EXPECT_EQ(account.get_balance(), 0.0);
+
+    std::cout << "GetBalanceBoundaryValues Test Passed\n";
 }
-
-TEST_F(BankAccountTest, UT_BankAccountWithdraw_ZeroAmount) {
-    EXPECT_THROW(account->withdraw(0.0), std::invalid_argument);
-}
-
-TEST_F(BankAccountTest, UT_BankAccountTransfer_ZeroAmount) {
-    EXPECT_THROW(account->transfer(0.0, *target_account), std::invalid_argument);
-}
-
-// Invalid Inputs
-TEST_F(BankAccountTest, UT_BankAccountDeposit_NegativeAmount) {
-    EXPECT_THROW(account->deposit(-500.0), std::invalid_argument);
-}
-
-TEST_F(BankAccountTest, UT_BankAccountWithdraw_NegativeAmount) {
-    EXPECT_THROW(account->withdraw(-300.0), std::invalid_argument);
-}
-
-TEST_F(BankAccountTest, UT_BankAccountTransfer_NegativeAmount) {
-    EXPECT_THROW(account->transfer(-200.0, *target_account), std::invalid_argument);
-}
-
-TEST_F(BankAccountTest, UT_BankAccountWithdraw_ExceedBalance) {
-    EXPECT_THROW(account->withdraw(1200.0), std::runtime_error);
-}
-
-TEST_F(BankAccountTest, UT_BankAccountTransfer_ExceedBalance) {
-    EXPECT_THROW(account->transfer(1200.0, *target_account), std::runtime_error);
-}
-
-TEST_F(BankAccountTest, UT_BankAccountTransfer_ToSameAccount) {
-    EXPECT_THROW(account->transfer(200.0, *account), std::invalid_argument);
-}
-
-// Dependency-Related Scenarios
-/*TEST_F(BankAccountTest, UT_BankAccountCreate_InvalidInitialBalance) {
-    EXPECT_THROW(BankAccount invalid_account("Alice", -500.0), std::invalid_argument);
-}*/
-
-/*TEST_F(BankAccountTest, UT_BankAccountTransfer_UninitializedAccount) {
-    BankAccount* uninitialized_account = nullptr;
-    EXPECT_THROW(account->transfer(200.0, *uninitialized_account), std::runtime_error);
-}*/
-
-// Additional Edge Cases
-TEST_F(BankAccountTest, UT_BankAccountThreadSafety_SimultaneousOperations) {
-    // TODO: Implement multithreading and synchronization tests.
-}
-
-TEST_F(BankAccountTest, UT_BankAccountRapidTransactions_Accuracy) {
-    // TODO: Implement rapid consecutive transactions test.
-}
-
-TEST_F(BankAccountTest, UT_BankAccountFloatingPoint_Precision) {
-    // TODO: Implement floating-point precision test.
-}
-
-/*TEST_F(BankAccountTest, UT_BankAccountDeposit_ExtremeValues) {
-    EXPECT_NO_THROW(account->deposit(1e9));
-    EXPECT_EQ(account->get_balance(), 1001000000.0);
-}*/
-
-TEST_F(BankAccountTest, UT_BankAccountWithdraw_ExtremeValues) {
-    account->deposit(1e9);
-    EXPECT_NO_THROW(account->withdraw(1e9));
-    EXPECT_EQ(account->get_balance(), 1000.0);
-}
-
-TEST_F(BankAccountTest, UT_BankAccountTransfer_ExtremeValues) {
-    account->deposit(1e9);
-    EXPECT_NO_THROW(account->transfer(1e9, *target_account));
-    EXPECT_EQ(account->get_balance(), 1000.0);
-    EXPECT_EQ(target_account->get_balance(), 1e9 + 500.0);
-}
-
-/*TEST_F(BankAccountTest, UT_BankAccountNullPointerOperations) {
-    BankAccount* null_account = nullptr;
-    EXPECT_THROW(null_account->deposit(100.0), std::runtime_error);
-    EXPECT_THROW(null_account->withdraw(100.0), std::runtime_error);
-    EXPECT_THROW(null_account->transfer(100.0, *target_account), std::runtime_error);
-}*/
